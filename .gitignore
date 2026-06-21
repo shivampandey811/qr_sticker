@@ -1,0 +1,14 @@
+.env
+**/.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.venv/
+node_modules/
+dist/
+.DS_Store
+firebase-service-account.json
+.next/
+out/
+
+
