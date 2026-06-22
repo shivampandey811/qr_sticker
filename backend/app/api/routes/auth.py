@@ -13,6 +13,7 @@ from app.schemas.auth import ChangePasswordRequest, ForgotPasswordRequest, Login
 from app.schemas.common import MessageResponse
 from app.services.audit import write_audit
 from app.services.email import send_action_email
+from app.core.config import settings
 
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
@@ -28,6 +29,7 @@ def safe_user(user: dict) -> dict:
 @router.post("/register", response_model=MessageResponse, status_code=201)
 async def register(payload: RegisterRequest, background_tasks: BackgroundTasks) -> MessageResponse:
     db = get_database()
+    is_dev = settings.environment == "development"
     document = {
         "name": payload.name,
         "email": payload.email.lower(),
@@ -35,7 +37,7 @@ async def register(payload: RegisterRequest, background_tasks: BackgroundTasks) 
         "whatsapp": payload.whatsapp,
         "password_hash": hash_password(payload.password),
         "role": "user",
-        "email_verified": False,
+        "email_verified": is_dev,
         "is_active": True,
         "fcm_tokens": [],
         "created_at": utc_now(),
@@ -45,10 +47,14 @@ async def register(payload: RegisterRequest, background_tasks: BackgroundTasks) 
         result = await db.users.insert_one(document)
     except DuplicateKeyError:
         raise HTTPException(status_code=409, detail="Email or mobile number is already registered")
-    token = create_action_token(str(result.inserted_id), "verify_email")
-    background_tasks.add_task(send_action_email, document["email"], "Verify your CarPing email", "verify-email", token)
+    
+    if not is_dev:
+        token = create_action_token(str(result.inserted_id), "verify_email")
+        background_tasks.add_task(send_action_email, document["email"], "Verify your CarPing email", "verify-email", token)
+    
     await write_audit("register", "user", str(result.inserted_id), str(result.inserted_id))
-    return MessageResponse(message="Registration successful. Please verify your email.")
+    msg = "Registration successful. Welcome to CarPing!" if is_dev else "Registration successful. Please verify your email."
+    return MessageResponse(message=msg)
 
 
 @router.get("/verify-email", response_model=MessageResponse)
@@ -69,7 +75,7 @@ async def login(payload: LoginRequest) -> TokenResponse:
     user = await get_database().users.find_one({"email": payload.email.lower(), "is_active": True})
     if not user or not verify_password(payload.password, user["password_hash"]):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid email or password")
-    if not user.get("email_verified"):
+    if settings.environment != "development" and not user.get("email_verified"):
         raise HTTPException(status_code=403, detail="Verify your email before signing in")
     user_id = str(user["_id"])
     await write_audit("login", "user", user_id, user_id)

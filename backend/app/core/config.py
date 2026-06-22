@@ -27,6 +27,7 @@ class Settings(BaseSettings):
     public_rate_limit: str = "10/minute"
     admin_email: EmailStr = "admin@carping.com"
     admin_password: str = "ChangeMe123!"
+    groq_api_key: str | None = None
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
 

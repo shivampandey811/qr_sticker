@@ -60,3 +60,68 @@ async def create_contact_request(request: Request, qr_id: str, payload: ContactR
     await db.notifications.insert_one(notification)
     background_tasks.add_task(send_owner_notifications, serialize_document(owner), payload.message_type, payload.custom_message, sticker["qr_id"])
     return {"message": "The owner has been notified anonymously.", "request_id": str(result.inserted_id)}
+
+
+from pydantic import BaseModel
+from typing import List
+import httpx
+
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+class ChatbotRequest(BaseModel):
+    messages: List[ChatMessage]
+
+SYSTEM_PROMPT = """You are the CarPing Assistant, a friendly, concise, and professional helper on the CarPing platform.
+CarPing is a secure, anonymous QR-based communication system for vehicle owners. 
+
+Key details of the system:
+1. Product/Service: Weather-proof smart QR stickers affixed to a vehicle's windshield/windscreen.
+2. Purpose: Allows anyone to contact the driver/owner securely without exposing phone numbers, email addresses, or personal identity.
+3. Use cases:
+   - "Vehicle blocking access"
+   - "Headlights left on"
+   - "Emergency alerts"
+   - "Flat tyre notification"
+   - "Accident or damage warnings"
+   - Custom anonymous messaging.
+4. Privacy: Contact is 100% anonymous, fast (avg latency 80ms), rate-limit protected, and doesn't require any app installation or account creation to send alerts.
+5. Setup: Quick 3-step setup: Affix the sticker -> Scan once to activate -> Link to your dashboard.
+6. Custom Styles: We offer 10+ custom sticker designs (Holographic, Cyberpunk, Amber Glow, Carbon Fiber, Brushed Titanium, Neon Violet, Matte White, Gold Leaf Deluxe, Tactical Camo, Reflective Grid) ranging from ₹200 to ₹800.
+7. Admin credentials: Pre-seeded admin user is admin@scan2owner.com with password ChangeMe123!.
+8. Developer environment: Email verification is mocked & bypassed locally in development.
+
+Answer questions concisely in 1-3 sentences. Keep formatting clean."""
+
+@router.post("/chatbot")
+async def chatbot(payload: ChatbotRequest):
+    if not settings.groq_api_key:
+        raise HTTPException(status_code=500, detail="Chatbot API key is not configured")
+    
+    api_messages = [{"role": "system", "content": SYSTEM_PROMPT}]
+    for msg in payload.messages:
+        api_messages.append({"role": msg.role, "content": msg.content})
+    
+    async with httpx.AsyncClient() as client:
+        try:
+            response = await client.post(
+                "https://api.groq.com/openai/v1/chat/completions",
+                headers={
+                    "Authorization": f"Bearer {settings.groq_api_key}",
+                    "Content-Type": "application/json"
+                },
+                json={
+                    "model": "llama3-8b-8192",
+                    "messages": api_messages,
+                    "temperature": 0.5,
+                    "max_tokens": 400
+                },
+                timeout=15.0
+            )
+            response.raise_for_status()
+            res_data = response.json()
+            reply = res_data["choices"][0]["message"]["content"]
+            return {"reply": reply}
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Error connecting to Chatbot backend: {str(e)}")

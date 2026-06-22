@@ -3,6 +3,7 @@ import { useState, useEffect } from 'react'
 import { ArrowRight, BellRing, Check, EyeOff, QrCode, ShieldCheck, Sparkles, Radio, Cpu, Shield, Zap, Info, Smartphone, Mail, AlertTriangle } from 'lucide-react'
 import Link from 'next/link'
 import Logo from '../components/Logo'
+import HelpChatbot from '../components/HelpChatbot'
 
 const steps = [
   {
@@ -412,6 +413,7 @@ export default function Home() {
           </p>
         </div>
       </footer>
+      <HelpChatbot />
     </div>
   )
 }
