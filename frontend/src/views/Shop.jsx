@@ -164,9 +164,9 @@ export default function Shop() {
       {/* Header */}
       <nav className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 py-6 md:px-8 border-b border-slate-100 bg-white/60 backdrop-blur-md">
         <Logo />
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-4 sm:gap-6">
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 hover:text-cyan-600 transition">
-            <ArrowLeft size={16} /> Back to Home
+            <ArrowLeft size={16} /> <span className="hidden sm:inline">Back to Home</span>
           </Link>
           <button 
             onClick={() => setIsCartOpen(true)}
