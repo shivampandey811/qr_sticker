@@ -1,249 +1,321 @@
 "use client"
-import { useState, useEffect } from 'react'
-import { ArrowRight, BellRing, Check, EyeOff, QrCode, ShieldCheck, Sparkles, Radio, Cpu, Shield, Zap, Info, Smartphone, Mail, AlertTriangle } from 'lucide-react'
+
+import { useEffect, useState } from 'react'
+import {
+  AlertTriangle,
+  ArrowRight,
+  Check,
+  Cpu,
+  Mail,
+  QrCode,
+  Radio,
+  Shield,
+  ShieldCheck,
+  Smartphone,
+  Sparkles,
+  Zap,
+} from 'lucide-react'
 import Link from 'next/link'
 import Logo from '../components/Logo'
 import HelpChatbot from '../components/HelpChatbot'
 
+const phrases = [
+  'Blocking a driveway?',
+  'Headlights still on?',
+  'Flat tire spotted?',
+  'Parked in a tow zone?',
+]
+
+const widestPhrase = phrases.reduce((longest, phrase) => (
+  phrase.length > longest.length ? phrase : longest
+), phrases[0])
+
 const steps = [
   {
     num: '01',
-    title: 'Camera Scan',
-    desc: 'Scanner scans the weatherproof CarPing sticker on your windscreen or bumper.',
-    icon: <Smartphone className="text-cyan-600" size={24} />,
-    screenTitle: 'Quick Scanner Access',
-    screenSubtitle: 'Direct contact request',
+    title: 'Scan the sticker',
+    desc: 'Anyone nearby opens the secure contact page by scanning your CarPing QR sticker.',
+    icon: <Smartphone size={22} />,
+    screenTitle: 'Sticker detected',
+    screenSubtitle: 'Secure page loaded',
     screenMock: (
       <div className="space-y-3">
-        <div className="bg-slate-50 border border-slate-100 rounded-xl p-3 text-center">
-          <p className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Scanned Node</p>
-          <p className="text-sm font-black text-slate-800">Vehicle ID: CP-9831</p>
+        <div className="rounded-2xl border border-slate-200 bg-slate-50 p-3 text-left">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Vehicle tag</p>
+          <p className="mt-1 text-sm font-bold text-slate-900">CP-9831 verified</p>
         </div>
-        <div className="bg-cyan-50 text-cyan-800 text-[11px] p-2.5 rounded-lg font-medium leading-relaxed">
-          🔒 Your contact details are entirely hidden from the scanner.
+        <div className="rounded-2xl bg-emerald-50 p-3 text-[11px] font-medium text-emerald-700">
+          Your phone number stays private.
         </div>
       </div>
-    )
+    ),
   },
   {
     num: '02',
-    title: 'Select Alert Type',
-    desc: 'Scanner selects a preset alert template to explain the issue immediately.',
-    icon: <Cpu className="text-indigo-650" size={24} />,
-    screenTitle: 'Select Action',
-    screenSubtitle: 'Ready template ping',
+    title: 'Choose the alert',
+    desc: 'The scanner picks a clear reason like blocked exit, headlights on, or parking issue.',
+    icon: <Cpu size={22} />,
+    screenTitle: 'Choose a reason',
+    screenSubtitle: 'Fast preset actions',
     screenMock: (
-      <div className="space-y-1.5 text-left">
-        <div className="bg-white border border-slate-200 p-2.5 rounded-lg text-[11px] font-semibold flex items-center justify-between shadow-sm">
-          <span>🚗 Blocking my exit</span>
-          <span className="h-2 w-2 rounded-full bg-cyan-500" />
-        </div>
-        <div className="bg-white border border-slate-200 p-2.5 rounded-lg text-[11px] font-semibold flex items-center justify-between shadow-sm">
-          <span>💡 Headlights still ON</span>
-          <span className="h-2 w-2 rounded-full bg-cyan-500" />
-        </div>
-        <div className="bg-white border border-slate-200 p-2.5 rounded-lg text-[11px] font-semibold flex items-center justify-between shadow-sm">
-          <span>⚠️ Flat tire detected</span>
-          <span className="h-2 w-2 rounded-full bg-cyan-500" />
-        </div>
+      <div className="space-y-2 text-left">
+        {['Blocking my exit', 'Headlights are on', 'Your tire looks flat'].map((item) => (
+          <div
+            key={item}
+            className="flex items-center justify-between rounded-2xl border border-slate-200 bg-white px-3 py-2.5 text-[11px] font-semibold text-slate-700 shadow-sm"
+          >
+            <span>{item}</span>
+            <span className="h-2.5 w-2.5 rounded-full bg-[#d97757]" />
+          </div>
+        ))}
       </div>
-    )
+    ),
   },
   {
     num: '03',
-    title: 'Instant Secure Ping',
-    desc: 'System sends a secure email or push notification directly to your device.',
-    icon: <Radio className="text-pink-600 animate-pulse" size={24} />,
-    screenTitle: 'Notification Sent',
-    screenSubtitle: 'Transmission successful',
+    title: 'Owner gets pinged',
+    desc: 'CarPing forwards the notification instantly by email or configured delivery channel.',
+    icon: <Radio size={22} />,
+    screenTitle: 'Alert delivered',
+    screenSubtitle: 'Private route complete',
     screenMock: (
-      <div className="space-y-3">
-        <div className="w-10 h-10 rounded-full bg-green-50 text-green-500 flex items-center justify-center mx-auto border border-green-150">
+      <div className="space-y-3 text-center">
+        <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-emerald-100 text-emerald-600">
           <Check size={20} />
         </div>
-        <p className="text-[11px] font-semibold text-slate-800">Owner Pinged Privately</p>
-        <p className="text-[10px] text-slate-500 leading-normal">CarPing forwarded the notification to the driver securely.</p>
+        <p className="text-[11px] font-semibold text-slate-900">Owner notified successfully</p>
+        <p className="text-[10px] leading-relaxed text-slate-500">
+          Message forwarded without exposing personal details.
+        </p>
       </div>
-    )
-  }
+    ),
+  },
 ]
 
 const usecases = [
   {
     id: 'windscreen',
-    title: 'Neat Windscreen Fit',
-    desc: 'Visually clear, fits right into your dashboard glass corner.',
-    badge: 'Applied on windscreen',
-    image: '/usecase_windscreen.png'
+    title: 'Clean on the windscreen',
+    desc: 'Minimal placement that stays readable without looking like a loud parking pass.',
+    badge: 'Windscreen',
+    image: '/usecase_windscreen.png',
   },
   {
     id: 'raining',
-    title: 'IP68 Weatherproof Protection',
-    desc: 'Engineered waterproof vinyl keeps scanning crystal clear even in torrential rain.',
-    badge: 'Raining conditions',
-    image: '/usecase_raining.png'
+    title: 'Readable in the rain',
+    desc: 'Weatherproof print keeps the QR sharp when conditions get rough.',
+    badge: 'Rain-ready',
+    image: '/usecase_raining.png',
   },
   {
     id: 'traffic',
-    title: 'Rear-Window Traffic Alert',
-    desc: 'Let other drivers behind ping you during congested commuter pileups.',
-    badge: 'Traffic conditions',
-    image: '/usecase_traffic.png'
+    title: 'Useful in traffic',
+    desc: 'Gives nearby drivers a low-friction way to reach you during jams or hazards.',
+    badge: 'Roadside',
+    image: '/usecase_traffic.png',
   },
   {
     id: 'noparking',
-    title: 'Quick Tow Mitigation',
-    desc: 'Gives parking marshals a secure way to alert you before writing tow tickets.',
-    badge: 'No parking zones',
-    image: '/usecase_noparking.png'
-  }
+    title: 'Helpful before towing',
+    desc: 'Parking staff or neighbors can warn you before things escalate.',
+    badge: 'Urgent alert',
+    image: '/usecase_noparking.png',
+  },
+]
+
+const features = [
+  { label: 'No phone number printed', icon: <Shield size={16} /> },
+  { label: 'Works with any camera app', icon: <QrCode size={16} /> },
+  { label: 'Delivered in seconds', icon: <Zap size={16} /> },
+]
+
+const metrics = [
+  { value: '142k+', label: 'alerts sent' },
+  { value: '80ms', label: 'average routing latency' },
+  { value: '99.98%', label: 'delivery success' },
 ]
 
 export default function Home() {
   const [typedText, setTypedText] = useState('')
-  const phrases = ["Blocking a Driveway?", "Left Headlights On?", "Flat Tire on Highway?", "Towed in Parking Zone?"]
   const [phraseIndex, setPhraseIndex] = useState(0)
   const [isDeleting, setIsDeleting] = useState(false)
   const [activeStep, setActiveStep] = useState(0)
 
   useEffect(() => {
-    let timer
     const currentPhrase = phrases[phraseIndex]
-    if (isDeleting) {
-      timer = setTimeout(() => {
-        setTypedText(currentPhrase.substring(0, typedText.length - 1))
-      }, 40)
-    } else {
-      timer = setTimeout(() => {
-        setTypedText(currentPhrase.substring(0, typedText.length + 1))
-      }, 80)
-    }
+    let timeout
 
     if (!isDeleting && typedText === currentPhrase) {
-      timer = setTimeout(() => setIsDeleting(true), 2500)
-    } else if (isDeleting && typedText === '') {
-      setIsDeleting(false)
-      setPhraseIndex((prev) => (prev + 1) % phrases.length)
+      timeout = setTimeout(() => setIsDeleting(true), 1600)
+      return () => clearTimeout(timeout)
     }
 
-    return () => clearTimeout(timer)
+    if (isDeleting && typedText === '') {
+      setIsDeleting(false)
+      setPhraseIndex((current) => (current + 1) % phrases.length)
+      return undefined
+    }
+
+    const nextText = isDeleting
+      ? currentPhrase.slice(0, typedText.length - 1)
+      : currentPhrase.slice(0, typedText.length + 1)
+
+    timeout = setTimeout(() => {
+      setTypedText(nextText)
+    }, isDeleting ? 35 : 75)
+
+    return () => clearTimeout(timeout)
   }, [typedText, isDeleting, phraseIndex])
 
   return (
-    <div className="min-h-screen bg-[#fcfcfd] text-slate-800 selection:bg-cyan-500 selection:text-white relative overflow-hidden font-sans">
-      
-      {/* Background Gradients */}
-      <div className="absolute top-0 left-0 right-0 h-[700px] bg-[radial-gradient(circle_at_top,_var(--tw-gradient-stops))] from-cyan-100/30 via-indigo-50/20 to-transparent pointer-events-none z-0" />
-      <div className="absolute top-[20%] right-[-10%] w-[500px] h-[500px] bg-indigo-100/20 rounded-full blur-[120px] pointer-events-none z-0" />
-      <div className="absolute bottom-[20%] left-[-10%] w-[600px] h-[600px] bg-cyan-100/20 rounded-full blur-[140px] pointer-events-none z-0" />
-      <div className="absolute inset-0 futuristic-grid opacity-25 pointer-events-none z-0" />
+    <div className="relative min-h-screen overflow-hidden bg-[var(--page-bg)] text-slate-900 selection:bg-[var(--brand)] selection:text-white">
+      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(217,119,87,0.18),_transparent_28%),radial-gradient(circle_at_80%_10%,_rgba(15,118,110,0.14),_transparent_24%),linear-gradient(180deg,_rgba(255,255,255,0.08),_transparent_50%)]" />
+      <div className="pointer-events-none absolute inset-0 atmospheric-grid opacity-60" />
 
-      {/* Navigation Header */}
-      <nav className="relative z-10 mx-auto flex max-w-7xl items-center justify-between px-6 py-6 md:px-8 bg-white/40 backdrop-blur-md border-b border-slate-100">
-        <Logo />
-        <div className="flex items-center gap-3 sm:gap-6">
-          <a href="#ux" className="hidden md:inline text-sm font-medium text-slate-650 hover:text-cyan-600 transition">User Experience</a>
-          <a href="#usecases" className="hidden md:inline text-sm font-medium text-slate-650 hover:text-cyan-600 transition">Scenarios</a>
-          <a href="#how" className="hidden md:inline text-sm font-medium text-slate-650 hover:text-cyan-600 transition">How it works</a>
-          <Link href="/shop" className="hidden sm:inline text-sm font-semibold text-cyan-650 hover:text-cyan-700 transition px-2.5 py-1.5 border border-cyan-200/50 rounded-xl bg-cyan-50/30">Sticker Shop</Link>
-          <Link className="text-sm font-medium text-slate-600 hover:text-slate-900 transition" href="/login">Sign in</Link>
-          <Link className="btn-gold !bg-slate-900 text-white px-3.5 py-2 md:px-4 md:py-2.5 text-xs md:text-sm font-bold shadow-md shadow-slate-900/10 shrink-0" href="/register">
-            Get Protected <ArrowRight size={14} className="ml-1 shrink-0" />
-          </Link>
+      <nav className="relative z-10 border-b border-white/60">
+        <div className="mx-auto flex max-w-7xl items-center justify-between px-6 py-5 md:px-8">
+          <Logo />
+          <div className="flex items-center gap-3 sm:gap-5">
+            <a href="#how" className="hidden text-sm font-medium text-slate-600 transition hover:text-slate-900 md:inline">
+              How it works
+            </a>
+            <a href="#usecases" className="hidden text-sm font-medium text-slate-600 transition hover:text-slate-900 md:inline">
+              Use cases
+            </a>
+            <Link href="/shop" className="hidden rounded-full border border-slate-200 bg-white/80 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-white sm:inline-flex">
+              Shop stickers
+            </Link>
+            <Link href="/login" className="text-sm font-medium text-slate-600 transition hover:text-slate-900">
+              Sign in
+            </Link>
+            <Link href="/register" className="btn-primary rounded-full px-4 py-2.5 text-sm">
+              Get started <ArrowRight size={15} />
+            </Link>
+          </div>
         </div>
       </nav>
-      {/* Hero Section */}
-      <section className="relative z-10 mx-auto max-w-7xl px-6 pb-24 pt-16 md:px-8 lg:pt-28">
-        {/* Futuristic Technical Frame */}
-        <div className="relative rounded-[2rem] sm:rounded-[2.5rem] border border-slate-100 bg-white/40 p-5 sm:p-8 md:p-14 backdrop-blur-xl shadow-2xl shadow-slate-100 grid gap-10 lg:gap-14 lg:grid-cols-[1.2fr_.8fr] items-center overflow-hidden">
-          {/* Decorative Blueprint Crosshairs */}
-          <div className="absolute top-0 left-0 h-4 w-4 border-t-2 border-l-2 border-slate-300 -translate-x-1 -translate-y-1" />
-          <div className="absolute top-0 right-0 h-4 w-4 border-t-2 border-r-2 border-slate-300 translate-x-1 -translate-y-1" />
-          <div className="absolute bottom-0 left-0 h-4 w-4 border-b-2 border-l-2 border-slate-300 -translate-x-1 translate-y-1" />
-          <div className="absolute bottom-0 right-0 h-4 w-4 border-b-2 border-r-2 border-slate-300 translate-x-1 translate-y-1" />
-          <div className="absolute top-1/2 left-0 w-full h-[1px] border-t border-dashed border-slate-200/50 pointer-events-none" />
-          <div className="absolute top-0 left-1/3 w-[1px] h-full border-l border-dashed border-slate-200/50 pointer-events-none" />
 
-          {/* Left Column: Tech Info & Headline */}
-          <div className="relative z-10 space-y-8">
-            <div className="inline-flex items-center gap-2 rounded-full border border-cyan-500/20 bg-cyan-500/[0.04] px-4 py-1.5 text-[10px] font-extrabold tracking-widest text-cyan-600 uppercase">
-              <span className="h-2 w-2 rounded-full bg-cyan-500 animate-ping" />
-              Privacy Protocol v2.4 // ONLINE
+      <section className="relative z-10 mx-auto max-w-7xl px-6 pb-20 pt-12 md:px-8 lg:pb-24 lg:pt-20">
+        <div className="grid items-center gap-10 lg:grid-cols-[1.1fr_0.9fr] lg:gap-14">
+          <div className="space-y-8">
+            <div className="inline-flex items-center gap-2 rounded-full border border-[var(--line)] bg-white/80 px-4 py-2 text-[11px] font-bold uppercase tracking-[0.18em] text-[var(--brand-deep)] shadow-sm">
+              <Sparkles size={14} />
+              Private driver contact for real roadside moments
             </div>
-            
-            {/* Dynamic Typing Title */}
-            <h1 className="font-display text-4xl font-black leading-[1.25] tracking-tight sm:text-5xl lg:text-6xl text-slate-900">
-              Ping the Driver for <br />
-              <span className="relative inline-flex items-center min-h-[40px] sm:min-h-[50px] lg:min-h-[60px] bg-gradient-to-r from-cyan-600 to-indigo-650 bg-clip-text text-transparent text-3xl sm:text-4xl lg:text-5xl font-extrabold mt-1">
-                {"\u200B" + typedText}
-              </span>
-              <span className="animate-pulse text-cyan-500 ml-1 text-3xl sm:text-4xl lg:text-5xl">|</span>
-            </h1>
 
-            <p className="max-w-xl text-base md:text-lg leading-relaxed text-slate-600">
-              No phone numbers, no app installations, no registration. CarPing establishes a secure, anonymous messaging tunnel directly from your vehicle's windscreen to your device in 80ms.
-            </p>
+            <div className="space-y-5">
+              <h1 className="font-display text-5xl font-bold leading-[0.98] tracking-[-0.04em] text-slate-950 sm:text-6xl lg:text-7xl">
+                Reach the driver without exposing their number.
+              </h1>
+              <div className="hero-typing-wrap">
+                <span className="hero-typing-measure">{widestPhrase}</span>
+                <span className="hero-typing-text">{typedText}</span>
+                <span className="hero-caret" aria-hidden="true" />
+              </div>
+              <p className="max-w-xl text-base leading-8 text-slate-600 sm:text-lg">
+                CarPing turns a sticker into a secure contact route. Nearby people can warn you about blocked exits,
+                headlights, towing risks, or damage in a few taps.
+              </p>
+            </div>
 
-            {/* Action Buttons */}
-            <div className="flex flex-col gap-4 sm:flex-row pt-2">
-              <Link href="/register" className="btn-gold px-8 py-4 text-sm font-bold shadow-lg shadow-indigo-500/25 flex items-center justify-center gap-2 group hover:scale-[1.02] transition-transform">
-                Get Your Smart Sticker <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            <div className="flex flex-col gap-3 sm:flex-row">
+              <Link href="/register" className="btn-primary px-7 py-4 text-sm font-semibold">
+                Create your sticker <ArrowRight size={16} />
               </Link>
-              <Link href="/shop" className="inline-flex items-center justify-center rounded-xl border border-slate-200 bg-white hover:bg-slate-50 px-8 py-4 text-sm font-semibold text-slate-700 transition shadow-sm hover:scale-[1.02]">
-                Browse 10+ Custom Styles
+              <Link href="/shop" className="rounded-full border border-slate-200 bg-white px-7 py-4 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-slate-300 hover:shadow-lg">
+                Explore designs
               </Link>
             </div>
 
-            {/* Interactive Stats Grid */}
-            <div className="pt-6 border-t border-slate-100 grid grid-cols-3 gap-2 sm:gap-6">
-              <div>
-                <p className="font-mono text-lg sm:text-xl md:text-2xl font-black text-slate-900">142k+</p>
-                <p className="text-[8px] sm:text-[10px] uppercase tracking-wider font-semibold text-slate-400 mt-1 leading-normal">Dispatched alerts</p>
-              </div>
-              <div>
-                <p className="font-mono text-lg sm:text-xl md:text-2xl font-black text-slate-900">80ms</p>
-                <p className="text-[8px] sm:text-[10px] uppercase tracking-wider font-semibold text-slate-400 mt-1 leading-normal">Avg latency</p>
-              </div>
-              <div>
-                <p className="font-mono text-lg sm:text-xl md:text-2xl font-black text-slate-900">99.98%</p>
-                <p className="text-[8px] sm:text-[10px] uppercase tracking-wider font-semibold text-slate-400 mt-1 leading-normal">Success rate</p>
-              </div>
+            <div className="flex flex-wrap gap-3">
+              {features.map((feature) => (
+                <div
+                  key={feature.label}
+                  className="inline-flex items-center gap-2 rounded-full border border-white/80 bg-white/75 px-4 py-2 text-sm font-medium text-slate-700 shadow-sm backdrop-blur"
+                >
+                  <span className="text-[var(--brand-deep)]">{feature.icon}</span>
+                  {feature.label}
+                </div>
+              ))}
+            </div>
+
+            <div className="grid gap-4 border-t border-slate-200/80 pt-6 sm:grid-cols-3">
+              {metrics.map((metric) => (
+                <div key={metric.label} className="rounded-3xl border border-white/70 bg-white/70 p-5 shadow-sm backdrop-blur">
+                  <p className="font-display text-3xl font-bold tracking-[-0.04em] text-slate-950">{metric.value}</p>
+                  <p className="mt-1 text-sm text-slate-500">{metric.label}</p>
+                </div>
+              ))}
             </div>
           </div>
 
-          {/* Right Column: Floating Simulated Smart Sticker Mockup */}
-          <div className="relative z-10 mx-auto w-full max-w-md lg:mr-0">
-            <div className="absolute -inset-16 rounded-full bg-cyan-200/15 blur-3xl pointer-events-none" />
-            <div className="glass-panel relative rotate-2 rounded-[2rem] sm:rounded-[2.2rem] p-3 sm:p-4 shadow-xl shadow-slate-200 animate-float">
-              <div className="rounded-[1.5rem] sm:rounded-[1.75rem] bg-white p-5 sm:p-8 text-slate-800 border border-slate-100 relative overflow-hidden">
-                <div className="absolute -top-10 -right-10 w-24 h-24 bg-cyan-500/10 rounded-full blur-2xl" />
-                
-                {/* Product Header */}
-                <div className="mb-4 sm:mb-6 flex justify-between items-center border-b border-slate-100 pb-3">
-                  <span className="font-mono text-[8px] tracking-widest text-slate-400 uppercase">MODEL.CP-01 // PRV-SYS</span>
-                  <span className="h-2 w-2 rounded-full bg-cyan-500 animate-pulse" />
+          <div className="relative mx-auto w-full max-w-xl">
+            <div className="absolute inset-x-10 top-10 h-40 rounded-full bg-[var(--brand-soft)] blur-3xl" />
+            <div className="relative overflow-hidden rounded-[2rem] border border-white/70 bg-[linear-gradient(160deg,rgba(255,255,255,0.88),rgba(255,248,244,0.94))] p-5 shadow-[0_30px_80px_rgba(15,23,42,0.12)] backdrop-blur">
+              <div className="flex items-center justify-between rounded-[1.5rem] border border-slate-200/80 bg-white/90 px-4 py-3 shadow-sm">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[var(--brand-deep)]">CarPing route</p>
+                  <p className="mt-1 text-sm font-semibold text-slate-900">Anonymous owner alert</p>
+                </div>
+                <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-slate-950 text-white">
+                  <QrCode size={22} />
+                </div>
+              </div>
+
+              <div className="mt-5 grid gap-4 sm:grid-cols-[1.1fr_0.9fr]">
+                <div className="rounded-[1.75rem] border border-slate-200 bg-slate-950 p-5 text-white">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-white/50">Driver card</p>
+                  <div className="mt-6 flex items-start justify-between gap-4">
+                    <div>
+                      <p className="font-display text-3xl font-bold tracking-[-0.04em]">Need to reach me?</p>
+                      <p className="mt-3 max-w-[14rem] text-sm leading-6 text-white/70">
+                        Scan the sticker and choose a reason. CarPing handles the private delivery.
+                      </p>
+                    </div>
+                    <div className="rounded-2xl bg-white p-3 text-slate-900 shadow-xl">
+                      <QrCode size={78} strokeWidth={1.5} />
+                    </div>
+                  </div>
+                  <div className="mt-6 rounded-2xl border border-white/10 bg-white/5 p-4">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-white/60">Status</span>
+                      <span className="inline-flex items-center gap-2 rounded-full bg-emerald-400/10 px-3 py-1 text-emerald-300">
+                        <span className="h-2 w-2 rounded-full bg-emerald-300" />
+                        ready to scan
+                      </span>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center justify-between gap-3 sm:gap-4 flex-nowrap">
-                  <div className="min-w-0">
-                    <p className="text-[9px] sm:text-[10px] font-bold uppercase tracking-[0.2em] text-cyan-600 truncate">Privacy Active</p>
-                    <p className="mt-1 font-display text-2xl sm:text-3xl font-black text-slate-950 leading-none">CarPing</p>
+                <div className="space-y-4">
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Live alert preview</p>
+                    <div className="mt-4 rounded-2xl bg-[var(--panel)] p-4">
+                      <div className="flex items-start gap-3">
+                        <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-[var(--brand-soft)] text-[var(--brand-deep)]">
+                          <AlertTriangle size={18} />
+                        </div>
+                        <div>
+                          <p className="text-sm font-semibold text-slate-900">Blocked driveway</p>
+                          <p className="mt-1 text-sm leading-6 text-slate-500">A nearby driver is trying to leave. Tap to review and respond.</p>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="p-1.5 sm:p-2 bg-slate-50 rounded-xl border border-slate-100 shrink-0">
-                    <QrCode size={48} className="text-slate-800 sm:w-[56px] sm:h-[56px]" strokeWidth={1.5} />
+
+                  <div className="rounded-[1.5rem] border border-slate-200 bg-white p-5 shadow-sm">
+                    <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Why owners choose it</p>
+                    <div className="mt-4 space-y-3">
+                      <div className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                        <Mail size={16} className="text-[var(--brand-deep)]" />
+                        Email-based delivery by default
+                      </div>
+                      <div className="flex items-center gap-3 rounded-2xl bg-slate-50 px-4 py-3 text-sm text-slate-700">
+                        <ShieldCheck size={16} className="text-[var(--brand-deep)]" />
+                        Personal contact details stay hidden
+                      </div>
+                    </div>
                   </div>
-                </div>
-                <div className="my-5 sm:my-8 h-[1px] bg-slate-100" />
-                <p className="font-display text-xl sm:text-2xl font-bold leading-tight text-slate-900">
-                  Need to contact <br />
-                  the driver?
-                </p>
-                <p className="mt-3 text-xs leading-relaxed text-slate-500">
-                  Scan the secure QR. Inform them of parking alerts or headlights instantly.
-                </p>
-                <div className="mt-6 sm:mt-8 flex items-center justify-between rounded-xl bg-slate-900 border border-slate-950 px-4 py-3 text-white">
-                  <span className="text-[10px] font-bold tracking-widest text-slate-400">SCAN • PIN • RESOLVE</span>
-                  <ShieldCheck size={18} className="text-cyan-400" />
                 </div>
               </div>
             </div>
@@ -251,78 +323,71 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Interactive User Experience Section */}
-      <section id="ux" className="relative z-10 mx-auto max-w-7xl px-6 py-24 md:px-8 border-t border-slate-100">
-        <div className="max-w-3xl mb-16">
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-cyan-600">User Experience Flow</p>
-          <h2 className="mt-4 font-display text-4xl font-black tracking-tight sm:text-5xl text-slate-900">
-            Frictionless scan routing, <span className="bg-gradient-to-r from-cyan-600 to-indigo-650 bg-clip-text text-transparent">zero registration</span> for scanner.
+      <section id="how" className="relative z-10 mx-auto max-w-7xl px-6 py-20 md:px-8">
+        <div className="mb-12 max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--brand-deep)]">How it works</p>
+          <h2 className="mt-4 font-display text-4xl font-bold tracking-[-0.04em] text-slate-950 sm:text-5xl">
+            Three quick steps from scan to solved.
           </h2>
-          <p className="mt-4 text-base text-slate-650 leading-relaxed">
-            Strangers do not need to register accounts, download apps, or login to reach you. They simply scan and select options instantly.
+          <p className="mt-4 text-lg leading-8 text-slate-600">
+            The scanner gets a simple flow, and you stay protected behind a secure delivery layer.
           </p>
         </div>
 
-        <div className="grid gap-12 lg:grid-cols-[1.1fr_0.9fr] items-center">
-          {/* Steps List (Left) */}
-          <div className="space-y-6">
-            {steps.map((step, idx) => {
-              const isActive = activeStep === idx
+        <div className="grid items-center gap-10 lg:grid-cols-[1.05fr_0.95fr]">
+          <div className="space-y-4">
+            {steps.map((step, index) => {
+              const isActive = activeStep === index
+
               return (
-                <div 
+                <button
                   key={step.num}
-                  onClick={() => setActiveStep(idx)}
-                  className={`cursor-pointer p-6 rounded-2xl transition-all duration-300 border flex items-start gap-4 ${
-                    isActive 
-                      ? 'bg-white border-cyan-400 shadow-md shadow-cyan-500/[0.04]' 
-                      : 'bg-white/50 border-slate-100 hover:bg-white hover:border-slate-200'
+                  type="button"
+                  onClick={() => setActiveStep(index)}
+                  className={`w-full rounded-[1.75rem] border p-6 text-left transition ${
+                    isActive
+                      ? 'border-[var(--brand)] bg-white shadow-[0_20px_45px_rgba(15,23,42,0.08)]'
+                      : 'border-slate-200 bg-white/60 hover:border-slate-300 hover:bg-white'
                   }`}
                 >
-                  <span className={`grid h-10 w-10 place-items-center rounded-xl shrink-0 ${
-                    isActive ? 'bg-cyan-500 text-white' : 'bg-slate-100 text-slate-600'
-                  }`}>
-                    {step.icon}
-                  </span>
-                  <div>
-                    <h3 className="font-display font-bold text-slate-900 text-base flex items-center gap-2">
-                      <span className="font-mono text-xs text-slate-400">{step.num}</span> {step.title}
-                    </h3>
-                    <p className="mt-2 text-xs text-slate-500 leading-relaxed">{step.desc}</p>
+                  <div className="flex items-start gap-4">
+                    <div className={`flex h-12 w-12 items-center justify-center rounded-2xl ${
+                      isActive ? 'bg-[var(--brand)] text-white' : 'bg-[var(--panel)] text-[var(--brand-deep)]'
+                    }`}>
+                      {step.icon}
+                    </div>
+                    <div>
+                      <div className="flex items-center gap-3">
+                        <span className="text-xs font-bold tracking-[0.18em] text-slate-400">{step.num}</span>
+                        <h3 className="font-display text-xl font-bold text-slate-950">{step.title}</h3>
+                      </div>
+                      <p className="mt-3 max-w-xl text-sm leading-7 text-slate-600">{step.desc}</p>
+                    </div>
                   </div>
-                </div>
+                </button>
               )
             })}
           </div>
 
-          {/* Interactive Phone Mockup (Right) */}
-          <div className="relative mx-auto w-full max-w-[280px]">
-            <div className="absolute -inset-10 rounded-full bg-cyan-200/10 blur-2xl pointer-events-none" />
-            
-            {/* Phone Shell */}
-            <div className="w-full aspect-[9/18.5] bg-slate-900 rounded-[2.5rem] p-3 shadow-2xl border-4 border-slate-800 relative">
-              {/* Speaker Notch */}
-              <div className="absolute top-4 left-1/2 -translate-x-1/2 w-20 h-4 bg-slate-900 rounded-full z-20 flex items-center justify-center">
-                <div className="w-10 h-1 bg-slate-800 rounded-full" />
-              </div>
-
-              {/* Phone Content Screen */}
-              <div className="w-full h-full bg-white rounded-[2rem] overflow-hidden pt-8 px-4 flex flex-col justify-between pb-4 border border-slate-900">
-                <div className="text-center pt-2">
-                  <div className="h-6 w-16 bg-slate-100 rounded-md mx-auto mb-3 flex items-center justify-center">
-                    <span className="text-[9px] font-black text-slate-800">CarPing</span>
+          <div className="relative mx-auto w-full max-w-[320px]">
+            <div className="absolute -inset-8 rounded-full bg-[var(--brand-soft)] blur-3xl" />
+            <div className="relative rounded-[3rem] border-[10px] border-slate-950 bg-slate-950 p-3 shadow-[0_35px_70px_rgba(15,23,42,0.24)]">
+              <div className="absolute left-1/2 top-3 z-10 h-5 w-28 -translate-x-1/2 rounded-full bg-slate-900" />
+              <div className="min-h-[620px] rounded-[2.3rem] bg-[linear-gradient(180deg,#fffdf9,#f7f4ef)] px-5 pb-5 pt-10">
+                <div className="rounded-[1.6rem] border border-slate-200 bg-white p-4 shadow-sm">
+                  <div className="mx-auto flex h-8 w-20 items-center justify-center rounded-full bg-slate-100 text-[10px] font-bold text-slate-800">
+                    CarPing
                   </div>
-                  <h4 className="text-xs font-black text-slate-905">{steps[activeStep].screenTitle}</h4>
-                  <p className="text-[8px] text-slate-400 mt-0.5">{steps[activeStep].screenSubtitle}</p>
-                  
-                  <div className="my-5">
-                    {steps[activeStep].screenMock}
-                  </div>
+                  <h4 className="mt-4 text-center text-sm font-bold text-slate-900">{steps[activeStep].screenTitle}</h4>
+                  <p className="mt-1 text-center text-[11px] text-slate-500">{steps[activeStep].screenSubtitle}</p>
+                  <div className="mt-5">{steps[activeStep].screenMock}</div>
                 </div>
 
-                <div className="mt-auto space-y-2 border-t border-slate-100 pt-3">
-                  <div className="flex justify-between items-center text-[7px] text-slate-400">
-                    <span>Protocol: CarPing Secure Gate</span>
-                    <span>SSL Active</span>
+                <div className="mt-4 rounded-[1.6rem] border border-slate-200 bg-white p-4 shadow-sm">
+                  <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-slate-400">Secure route</p>
+                  <div className="mt-3 flex items-center justify-between rounded-2xl bg-slate-950 px-4 py-3 text-white">
+                    <span className="text-xs font-medium text-white/70">Encrypted delivery active</span>
+                    <ShieldCheck size={16} className="text-[#f59e0b]" />
                   </div>
                 </div>
               </div>
@@ -331,92 +396,74 @@ export default function Home() {
         </div>
       </section>
 
-      {/* Roadside Scenarios Section */}
-      <section id="usecases" className="relative z-10 mx-auto max-w-7xl px-6 py-24 md:px-8 border-t border-slate-100">
-        <div className="text-center max-w-2xl mx-auto mb-16">
-          <p className="text-xs font-bold uppercase tracking-wider text-cyan-600">Engineered for the Road</p>
-          <h2 className="mt-3 font-display text-4xl font-extrabold tracking-tight sm:text-5xl text-slate-900">
-            Made for Real-World Scenarios
+      <section id="usecases" className="relative z-10 mx-auto max-w-7xl px-6 py-20 md:px-8">
+        <div className="mb-12 max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-[var(--brand-deep)]">Use cases</p>
+          <h2 className="mt-4 font-display text-4xl font-bold tracking-[-0.04em] text-slate-950 sm:text-5xl">
+            Built for everyday parking and roadside friction.
           </h2>
-          <p className="mt-4 text-base text-slate-650">
-            Whether parked in tight city quarters, commuting, or caught in heavy rain, CarPing ensures contact.
+          <p className="mt-4 text-lg leading-8 text-slate-600">
+            The sticker needs to feel clean on the car and practical when something urgent happens.
           </p>
         </div>
 
-        {/* Usecase Cards */}
-        <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-6 sm:grid-cols-2 xl:grid-cols-4">
           {usecases.map((usecase) => (
-            <div key={usecase.id} className="glass-panel rounded-3xl overflow-hidden border border-slate-100 flex flex-col justify-between shadow-sm group hover:border-cyan-400/40 transition-all duration-300">
-              <div className="relative aspect-[4/3] overflow-hidden bg-slate-900 border-b border-slate-100 flex items-center justify-center p-1">
-                <img 
-                  src={usecase.image} 
-                  alt={usecase.title} 
-                  className="w-full h-full object-cover rounded-t-2xl transition duration-500 group-hover:scale-105" 
+            <article
+              key={usecase.id}
+              className="overflow-hidden rounded-[1.75rem] border border-white/70 bg-white/80 shadow-sm backdrop-blur transition hover:-translate-y-1 hover:shadow-[0_22px_50px_rgba(15,23,42,0.08)]"
+            >
+              <div className="relative aspect-[4/3] overflow-hidden bg-slate-100">
+                <img
+                  src={usecase.image}
+                  alt={usecase.title}
+                  className="h-full w-full object-cover transition duration-500 hover:scale-105"
                 />
-                <span className="absolute top-3 left-3 bg-white/95 backdrop-blur-md text-[9px] font-bold uppercase tracking-widest text-cyan-600 px-2 py-0.5 rounded border border-slate-100">
+                <span className="absolute left-4 top-4 rounded-full bg-white/90 px-3 py-1 text-[10px] font-bold uppercase tracking-[0.16em] text-[var(--brand-deep)] shadow-sm">
                   {usecase.badge}
                 </span>
               </div>
-              <div className="p-6">
-                <h3 className="font-display font-bold text-slate-900 text-base group-hover:text-cyan-600 transition-colors">
-                  {usecase.title}
-                </h3>
-                <p className="mt-2 text-xs text-slate-500 leading-relaxed">
-                  {usecase.desc}
-                </p>
+              <div className="p-5">
+                <h3 className="font-display text-xl font-bold text-slate-950">{usecase.title}</h3>
+                <p className="mt-3 text-sm leading-7 text-slate-600">{usecase.desc}</p>
               </div>
-            </div>
+            </article>
           ))}
         </div>
       </section>
 
-      {/* How it Works / System Setup */}
-      <section id="how" className="relative z-10 mx-auto max-w-7xl px-6 py-24 md:px-8 border-t border-slate-100">
-        <div className="max-w-3xl mb-16">
-          <p className="text-xs font-bold uppercase tracking-[0.25em] text-cyan-600">Quick Deployment</p>
-          <h2 className="mt-4 font-display text-4xl font-extrabold tracking-tight sm:text-5xl text-slate-900">
-            Frictionless Setup & Verification.
-          </h2>
-        </div>
-
-        <div className="grid gap-6 md:grid-cols-3">
-          <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-100">
-            <span className="font-mono text-xs font-black text-cyan-500">01</span>
-            <h3 className="mt-6 sm:mt-10 font-display text-lg font-bold text-slate-900">Deploy Sticker</h3>
-            <p className="mt-3 text-xs leading-relaxed text-slate-500">
-              Affix your sleek weather-sealed QR code sticker to any vehicle window or windshield.
-            </p>
-          </div>
-          <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-100">
-            <span className="font-mono text-xs font-black text-cyan-500">02</span>
-            <h3 className="mt-6 sm:mt-10 font-display text-lg font-bold text-slate-900">Link Instantly</h3>
-            <p className="mt-3 text-xs leading-relaxed text-slate-500">
-              Scan once to bind the sticker to your account. No complex installation required.
-            </p>
-          </div>
-          <div className="glass-panel p-6 sm:p-8 rounded-3xl border border-slate-100">
-            <span className="font-mono text-xs font-black text-cyan-500">03</span>
-            <h3 className="mt-6 sm:mt-10 font-display text-lg font-bold text-slate-900">Receive Alerts</h3>
-            <p className="mt-3 text-xs leading-relaxed text-slate-500">
-              Strangers trigger alerts instantly when scanning. Forwarded securely via email.
-            </p>
+      <section className="relative z-10 mx-auto max-w-7xl px-6 pb-20 pt-4 md:px-8">
+        <div className="rounded-[2rem] border border-white/70 bg-[linear-gradient(135deg,rgba(15,23,42,0.96),rgba(28,37,54,0.94))] px-6 py-10 text-white shadow-[0_30px_70px_rgba(15,23,42,0.2)] sm:px-10">
+          <div className="grid gap-8 lg:grid-cols-[1fr_auto] lg:items-center">
+            <div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-[#f8b47a]">Ready to deploy</p>
+              <h2 className="mt-4 font-display text-4xl font-bold tracking-[-0.04em] sm:text-5xl">
+                Put a better contact layer on your vehicle.
+              </h2>
+              <p className="mt-4 max-w-2xl text-lg leading-8 text-white/72">
+                Set up a secure sticker, link it once, and let CarPing handle the awkward roadside moments for you.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3 sm:flex-row lg:flex-col">
+              <Link href="/register" className="inline-flex items-center justify-center gap-2 rounded-full bg-[#d97757] px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-[#c96b4b]">
+                Start now <ArrowRight size={16} />
+              </Link>
+              <Link href="/shop" className="inline-flex items-center justify-center rounded-full border border-white/15 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-white/5">
+                See sticker styles
+              </Link>
+            </div>
           </div>
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="relative z-10 border-t border-slate-100 bg-[#f9fafb] px-6 py-12 text-slate-500">
-        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-6 sm:flex-row px-2">
+      <footer className="relative z-10 border-t border-white/70 px-6 py-10 text-slate-500">
+        <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 sm:flex-row md:px-2">
           <Logo />
-          <p className="text-xs text-slate-400">
-            &copy; 2026 CarPing. Secure vehicle communication framework. All rights reserved.
-          </p>
+          <p className="text-sm text-slate-500">© 2026 CarPing. Private vehicle contact, designed for real-world urgency.</p>
         </div>
       </footer>
+
       <HelpChatbot />
     </div>
   )
 }
-
-
-
